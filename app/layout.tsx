@@ -5,6 +5,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "GhostQuery",
   description: "Search the open web with style",
+    icons: {
+    icon: "/ghost.png", // your new favicon
+  },
 };
 
 export default function RootLayout({
