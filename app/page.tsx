@@ -1,44 +1,49 @@
+
+// This is a React component for a cyberpunk-themed search terminal UI
+// It uses React hooks for state and animation
 "use client";
 import { useState, useEffect } from "react";
 
 export default function GhostQuery() {
+  // Stores the status messages shown below the search bar
   const [status, setStatus] = useState<string[]>([
     "SYSTEM READY",
     "AWAITING USER INPUT...",
     "PRESS ENTER OR CLICK EXECUTE TO SEARCH",
   ]);
+  // Stores the user's search input
   const [query, setQuery] = useState("");
+  // True when a search is running
   const [processing, setProcessing] = useState(false);
+  // The animated title text
   const [title, setTitle] = useState("");
 
-  // Typing + glitch effect
- useEffect(() => {
-  const text = "GHOSTQUERY"; 
-  let index = 0;
-  const glitchEffect = setInterval(() => {
-    let glitchText = "";
-    for (let i = 0; i < index; i++) {
-      if (text[i] === " ") {
-        glitchText += " ";
-      } else {
-        glitchText += Math.random() > 0.8 ? String.fromCharCode(33 + Math.random() * 94) : text[i];
+  // Animates the title by revealing one letter at a time
+  useEffect(() => {
+    const text = "GHOST QUERY"; // The title to animate
+    let index = 0;
+    const glitchEffect = setInterval(() => {
+      let glitchText = "";
+      for (let i = 0; i < index; i++) {
+        glitchText += text[i];
       }
-    }
-    setTitle(glitchText);
-    index++;
-    if (index > text.length) clearInterval(glitchEffect);
-  }, 120);
-  return () => clearInterval(glitchEffect);
-}, []);
+      setTitle(glitchText);
+      index++;
+      if (index > text.length) clearInterval(glitchEffect);
+    }, 120);
+    return () => clearInterval(glitchEffect);
+  }, []);
 
+  // Simulates a search process and updates the status messages
   const executeSearch = (q: string) => {
-    setProcessing(true);
+    setProcessing(true); // Show loading state
     setStatus([
       "INITIALIZING SEARCH PROTOCOL...",
       `QUERY: ${q.toUpperCase()}`,
       "SCANNING DATABASES...",
     ]);
 
+    // Fake a delay for the search
     setTimeout(() => {
       setStatus([
         "SEARCH COMPLETED SUCCESSFULLY",
@@ -48,6 +53,7 @@ export default function GhostQuery() {
       setProcessing(false);
       setQuery("");
 
+      // Reset status after a short delay
       setTimeout(() => {
         setStatus([
           "SYSTEM READY",
@@ -58,6 +64,7 @@ export default function GhostQuery() {
     }, 2000);
   };
 
+  // Handles the form submission for searching
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) executeSearch(query.trim());
@@ -70,27 +77,31 @@ export default function GhostQuery() {
   };
 
   return (
+    // Main container for the whole page
     <div className="min-h-screen flex flex-col justify-center items-center bg-black text-[#00ff00] font-mono relative">
-      {/* Scanline overlay */}
+      {/* Adds a scanline effect over the whole page for a retro look */}
       <div className="pointer-events-none fixed inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,255,0,0.05)_2px,rgba(0,255,0,0.05)_4px)]" />
 
       <div className="w-[90%] max-w-[800px] relative z-10">
-        {/* Header with glitch */}
+        {/* Header with animated title */}
         <div className="text-center mb-12 relative">
           <div className="text-5xl md:text-6xl tracking-wider mb-2 relative inline-block">
+            {/* Animated title text appears here */}
             <span className="absolute inset-0 text-[#ff00ff] mix-blend-screen animate-[glitch_1s_infinite]">{title}</span>
             <span className="relative">{title}</span>
           </div>
-          <div className="text-lg text-[#008000] mb-2">SEARCH TERMINAL v2.1</div>
-          <div className="text-sm text-[#008000]">LINUX TERMINAL MODE</div>
+          {/* Subtitle below the title */}
+          <div className="text-lg text-[#008000] mb-2">Search With Style</div>
         </div>
 
-        {/* Prompt */}
+        {/* Search prompt with terminal-style prefix and input */}
         <form onSubmit={handleSubmit} className="mb-8">
           <div className="flex items-center text-lg mb-4 group">
-            <span className="mr-2 drop-shadow-[0_0_5px_rgba(0,255,0,0.5)]">
+            {/* Terminal prompt in cyberpunk color */}
+            <span className="mr-5 text-[#ff0055] drop-shadow-[0_0_6px_rgba(255,0,85,0.7)]">
               kal@psycho:~$
             </span>
+            {/* User input field */}
             <input
               type="text"
               value={query}
@@ -98,11 +109,12 @@ export default function GhostQuery() {
               placeholder="ENTER SEARCH QUERY"
               className="flex-1 bg-transparent outline-none text-[#00ff00] placeholder:text-[#008000]/70 placeholder:italic drop-shadow-[0_0_3px_rgba(0,255,0,0.5)] transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_10px_rgba(0,255,0,0.8)]"
             />
+            {/* Blinking cursor effect */}
             <div className="w-3 h-5 ml-1 bg-[#00ff00] animate-pulse shadow-[0_0_5px_rgba(0,255,0,0.5)]" />
           </div>
         </form>
 
-        {/* Execute button */}
+        {/* Execute button for submitting the search */}
         <div className="text-center mb-8">
           <button
             onClick={(e) => {
@@ -120,7 +132,7 @@ export default function GhostQuery() {
           </button>
         </div>
 
-        {/* Status section */}
+        {/* Status messages below the search bar */}
         <div className="border border-[#00ff00]/30 p-4 bg-[#00ff00]/5 shadow-[0_0_15px_rgba(0,255,0,0.3)]">
           {status.map((line, i) => (
             <div
@@ -137,7 +149,7 @@ export default function GhostQuery() {
         </div>
       </div>
 
-      {/* Glitch animation keyframes */}
+      {/* CSS for the animated glitch effect on the title */}
       <style jsx>{`
         @keyframes glitch {
           0% {
