@@ -3,6 +3,23 @@
 // It uses React hooks for state and animation
 "use client";
 import { useState, useEffect } from "react";
+import SearchResults from "@/components/SearchResults";
+
+interface SearchResult {
+  title: string;
+  snippet: string;
+  url?: string;
+  relevance_score: number;
+  source: string;
+}
+
+interface SearchResponse {
+  results: SearchResult[];
+  summary: string;
+  query: string;
+  total_results: number;
+  processing_time_ms: number;
+}
 
 export default function GhostQuery() {
   // Stores the status messages shown below the search bar
@@ -17,6 +34,9 @@ export default function GhostQuery() {
   const [processing, setProcessing] = useState(false);
   // The animated title text
   const [title, setTitle] = useState("");
+  // Search results state
+  const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
+  const [searchError, setSearchError] = useState<string>("");
 
   // Animates the title by revealing one letter at a time
   useEffect(() => {
@@ -34,46 +54,88 @@ export default function GhostQuery() {
     return () => clearInterval(glitchEffect);
   }, []);
 
-  // Simulates a search process and updates the status messages
-  const executeSearch = (q: string) => {
-    setProcessing(true); // Show loading state
+  // Performs real AI search using the API
+  const executeSearch = async (q: string) => {
+    setProcessing(true);
+    setSearchError("");
+    setSearchResults(null);
     setStatus([
       "INITIALIZING SEARCH PROTOCOL...",
       `QUERY: ${q.toUpperCase()}`,
-      "SCANNING DATABASES...",
+      "CONNECTING TO AI SERVICE...",
     ]);
 
-    // Fake a delay for the search
-    setTimeout(() => {
+    try {
       setStatus([
-        "SEARCH COMPLETED SUCCESSFULLY",
-        `RESULTS FOUND FOR: ${q.toUpperCase()}`,
-        "READY FOR NEW QUERY",
+        "SEARCH IN PROGRESS...",
+        `ANALYZING: ${q.toUpperCase()}`,
+        "PROCESSING WITH AI MODEL...",
       ]);
+
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: q,
+          limit: 10
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Search failed');
+      }
+
+      if (data.success && data.data) {
+        setSearchResults(data.data);
+        setStatus([
+          "SEARCH COMPLETED SUCCESSFULLY",
+          `FOUND ${data.data.total_results} RESULTS FOR: ${q.toUpperCase()}`,
+          "DISPLAYING RESULTS BELOW",
+        ]);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setSearchError(errorMessage);
+      setStatus([
+        "SEARCH FAILED",
+        `ERROR: ${errorMessage.toUpperCase()}`,
+        "CHECK SYSTEM STATUS",
+      ]);
+    } finally {
       setProcessing(false);
       setQuery("");
 
-      // Reset status after a short delay
+      // Reset status after delay if no results to show
       setTimeout(() => {
-        setStatus([
-          "SYSTEM READY",
-          "AWAITING USER INPUT...",
-          "PRESS ENTER OR CLICK EXECUTE TO SEARCH",
-        ]);
-      }, 3000);
-    }, 2000);
+        if (!searchResults && !searchError) {
+          setStatus([
+            "SYSTEM READY",
+            "AWAITING USER INPUT...",
+            "PRESS ENTER OR CLICK EXECUTE TO SEARCH",
+          ]);
+        }
+      }, 5000);
+    }
   };
 
   // Handles the form submission for searching
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) executeSearch(query.trim());
-    else
+    if (query.trim()) {
+      await executeSearch(query.trim());
+    } else {
       setStatus([
         "ERROR: NO SEARCH PARAMETERS",
         "PLEASE ENTER A VALID QUERY",
         "SYSTEM READY",
       ]);
+    }
   };
 
   return (
@@ -117,9 +179,9 @@ export default function GhostQuery() {
         {/* Execute button for submitting the search */}
         <div className="text-center mb-8">
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
-              if (!processing) handleSubmit(e as any);
+              if (!processing) await handleSubmit(e as React.FormEvent);
             }}
             disabled={processing}
             className={`px-6 py-2 uppercase tracking-wider border border-[#00ff00] shadow-[0_0_10px_rgba(0,255,0,0.3)] transition ${
@@ -148,6 +210,19 @@ export default function GhostQuery() {
           ))}
         </div>
       </div>
+
+      {/* Search Results */}
+      {(searchResults || searchError) && (
+        <SearchResults
+          results={searchResults?.results || []}
+          query={searchResults?.query || query}
+          summary={searchResults?.summary || ""}
+          totalResults={searchResults?.total_results || 0}
+          processingTime={searchResults?.processing_time_ms || 0}
+          isLoading={processing}
+          error={searchError}
+        />
+      )}
 
       {/* CSS for the animated glitch effect on the title */}
       <style jsx>{`
