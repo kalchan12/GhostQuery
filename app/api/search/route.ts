@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchSchema, sanitizeInput, checkRateLimit } from '@/lib/validation';
-import { aiService } from '@/lib/ai-service';
+import { openDataService } from '@/lib/open-data-service';
 
 // Handle POST requests to /api/search
 export async function POST(request: NextRequest) {
@@ -35,20 +35,15 @@ export async function POST(request: NextRequest) {
 
     const validatedData = searchSchema.parse(body);
 
-    // Check if AI service is healthy
-    const isHealthy = await aiService.checkHealth();
+    // Check if open data service is healthy
+    const isHealthy = await openDataService.checkHealth();
     if (!isHealthy) {
-      return NextResponse.json(
-        { 
-          error: 'Service unavailable',
-          message: 'AI search service is currently unavailable. Please ensure Ollama is running.' 
-        },
-        { status: 503 }
-      );
+      console.warn('Some data sources may be unavailable, proceeding with fallback');
+      // Don't fail completely, as we have fallback data
     }
 
-    // Perform the AI search
-    const searchResults = await aiService.generateSearch(
+    // Perform the open data search
+    const searchResults = await openDataService.searchOpenData(
       validatedData.query, 
       validatedData.limit
     );
@@ -91,21 +86,22 @@ export async function POST(request: NextRequest) {
 // Handle GET requests for health checks
 export async function GET() {
   try {
-    const isHealthy = await aiService.checkHealth();
+    const isHealthy = await openDataService.checkHealth();
     
     return NextResponse.json({
       status: 'ok',
-      ai_service: isHealthy ? 'healthy' : 'unavailable',
+      data_service: isHealthy ? 'healthy' : 'fallback_available',
+      sources: ['Data.gov (USA)', 'EU Open Data Portal', 'Fallback Sources'],
       timestamp: new Date().toISOString()
     });
   } catch (_error) {
     return NextResponse.json(
       { 
-        status: 'error',
-        ai_service: 'unavailable',
-        message: 'Health check failed' 
+        status: 'ok',
+        data_service: 'fallback_available',
+        message: 'Using fallback data sources' 
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

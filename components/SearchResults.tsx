@@ -6,6 +6,8 @@ interface SearchResult {
   url?: string;
   relevance_score: number;
   source: string;
+  organization?: string;
+  last_updated?: string;
 }
 
 interface SearchResultsProps {
@@ -129,9 +131,12 @@ export default function SearchResults({
               <div className="flex items-center justify-between text-xs text-[#008000]">
                 <div className="flex items-center space-x-4">
                   <span>Source: {result.source}</span>
+                  {result.organization && (
+                    <span>• Org: {result.organization}</span>
+                  )}
                   {result.url && (
                     <span className="text-[#006600]">
-                      {new URL(result.url).hostname}
+                      • {new URL(result.url).hostname}
                     </span>
                   )}
                 </div>
