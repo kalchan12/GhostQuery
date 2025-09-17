@@ -38,6 +38,8 @@ export default function GhostQuery() {
   // Search results state
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string>("");
+  // Search mode: 'data' for open data search, 'ai' for AI search
+  const [searchMode, setSearchMode] = useState<'data' | 'ai'>('data');
 
   // Animates the title by revealing one letter at a time
   useEffect(() => {
@@ -55,25 +57,30 @@ export default function GhostQuery() {
     return () => clearInterval(glitchEffect);
   }, []);
 
-  // Performs real AI search using the API
+  // Performs search using the selected mode (Open Data or AI)
   const executeSearch = async (q: string) => {
     setProcessing(true);
     setSearchError("");
     setSearchResults(null);
+    
+    const isAIMode = searchMode === 'ai';
+    const apiEndpoint = isAIMode ? '/api/ai-search' : '/api/search';
+    const serviceName = isAIMode ? 'GROK AI SERVICE' : 'OPEN DATA SERVICE';
+    
     setStatus([
       "INITIALIZING SEARCH PROTOCOL...",
       `QUERY: ${q.toUpperCase()}`,
-      "CONNECTING TO AI SERVICE...",
+      `CONNECTING TO ${serviceName}...`,
     ]);
 
     try {
       setStatus([
         "SEARCH IN PROGRESS...",
         `ANALYZING: ${q.toUpperCase()}`,
-        "PROCESSING WITH AI MODEL...",
+        isAIMode ? "PROCESSING WITH AI MODEL..." : "SEARCHING DATA REPOSITORIES...",
       ]);
 
-      const response = await fetch('/api/search', {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +94,7 @@ export default function GhostQuery() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Search failed');
+        throw new Error(data.message || `${isAIMode ? 'AI' : 'Data'} search failed`);
       }
 
       if (data.success && data.data) {
@@ -95,7 +102,7 @@ export default function GhostQuery() {
         setStatus([
           "SEARCH COMPLETED SUCCESSFULLY",
           `FOUND ${data.data.total_results} RESULTS FOR: ${q.toUpperCase()}`,
-          "DISPLAYING RESULTS BELOW",
+          `SOURCE: ${serviceName}`,
         ]);
       } else {
         throw new Error('Invalid response format');
@@ -155,6 +162,80 @@ export default function GhostQuery() {
           </div>
           {/* Subtitle below the title */}
           <div className="text-lg mb-2" style={{ color: colors.text.secondary }}>Search With Style</div>
+        </div>
+
+        {/* Search Mode Selection */}
+        <div className="text-center mb-8">
+          <div className="text-sm mb-4" style={{ color: colors.text.secondary }}>SELECT SEARCH MODE</div>
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={() => setSearchMode('data')}
+              disabled={processing}
+              className={`px-4 py-2 uppercase tracking-wider border transition-all duration-200 ${
+                searchMode === 'data'
+                  ? "text-black"
+                  : "hover:text-black"
+              } ${processing ? "opacity-50 cursor-not-allowed" : ""}`}
+              style={{
+                borderColor: colors.primary.bright,
+                color: searchMode === 'data' ? '#000' : colors.primary.bright,
+                backgroundColor: searchMode === 'data' ? colors.primary.bright : 'transparent',
+                boxShadow: searchMode === 'data' ? colors.effects.glowBright : colors.effects.shadow
+              }}
+              onMouseEnter={(e) => {
+                if (!processing && searchMode !== 'data') {
+                  e.currentTarget.style.backgroundColor = colors.primary.bright;
+                  e.currentTarget.style.color = '#000';
+                  e.currentTarget.style.boxShadow = colors.effects.glowBright;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!processing && searchMode !== 'data') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = colors.primary.bright;
+                  e.currentTarget.style.boxShadow = colors.effects.shadow;
+                }
+              }}
+            >
+              🗄️ Open Data
+            </button>
+            <button
+              onClick={() => setSearchMode('ai')}
+              disabled={processing}
+              className={`px-4 py-2 uppercase tracking-wider border transition-all duration-200 ${
+                searchMode === 'ai'
+                  ? "text-black"
+                  : "hover:text-black"
+              } ${processing ? "opacity-50 cursor-not-allowed" : ""}`}
+              style={{
+                borderColor: '#ff0055',
+                color: searchMode === 'ai' ? '#000' : '#ff0055',
+                backgroundColor: searchMode === 'ai' ? '#ff0055' : 'transparent',
+                boxShadow: searchMode === 'ai' ? '0 0 20px rgba(255, 0, 85, 0.5)' : '0 0 10px rgba(255, 0, 85, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                if (!processing && searchMode !== 'ai') {
+                  e.currentTarget.style.backgroundColor = '#ff0055';
+                  e.currentTarget.style.color = '#000';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 0, 85, 0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!processing && searchMode !== 'ai') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#ff0055';
+                  e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 0, 85, 0.2)';
+                }
+              }}
+            >
+              🤖 AI Search
+            </button>
+          </div>
+          <div className="text-xs mt-2" style={{ color: colors.text.muted }}>
+            {searchMode === 'data' 
+              ? 'Search government and public datasets from Data.gov and EU Open Data Portal'
+              : 'Get AI-powered insights and comprehensive analysis using Hugging Face AI'}
+          </div>
         </div>
 
         {/* Search prompt with terminal-style prefix and input */}
@@ -262,6 +343,7 @@ export default function GhostQuery() {
           processingTime={searchResults?.processing_time_ms || 0}
           isLoading={processing}
           error={searchError}
+          searchMode={searchMode}
         />
       )}
 
