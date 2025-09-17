@@ -4,6 +4,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import SearchResults from "@/components/SearchResults";
+import { colors } from "@/lib/colors";
 
 interface SearchResult {
   title: string;
@@ -140,9 +141,9 @@ export default function GhostQuery() {
 
   return (
     // Main container for the whole page
-    <div className="min-h-screen flex flex-col justify-center items-center bg-black text-[#00ff00] font-mono relative">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-black font-mono relative" style={{ color: colors.text.primary }}>
       {/* Adds a scanline effect over the whole page for a retro look */}
-      <div className="pointer-events-none fixed inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,255,0,0.05)_2px,rgba(0,255,0,0.05)_4px)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,255,65,0.05)_2px,rgba(0,255,65,0.05)_4px)]" />
 
       <div className="w-[90%] max-w-[800px] relative z-10">
         {/* Header with animated title */}
@@ -153,7 +154,7 @@ export default function GhostQuery() {
             <span className="relative">{title}</span>
           </div>
           {/* Subtitle below the title */}
-          <div className="text-lg text-[#008000] mb-2">Search With Style</div>
+          <div className="text-lg mb-2" style={{ color: colors.text.secondary }}>Search With Style</div>
         </div>
 
         {/* Search prompt with terminal-style prefix and input */}
@@ -169,10 +170,20 @@ export default function GhostQuery() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="ENTER SEARCH QUERY"
-              className="flex-1 bg-transparent outline-none text-[#00ff00] placeholder:text-[#008000]/70 placeholder:italic drop-shadow-[0_0_3px_rgba(0,255,0,0.5)] transition-all duration-200 group-hover:scale-105 group-hover:drop-shadow-[0_0_10px_rgba(0,255,0,0.8)]"
+              className="flex-1 bg-transparent outline-none ghost-input placeholder:italic transition-all duration-200 group-hover:scale-105"
+              style={{ 
+                color: colors.primary.bright,
+                textShadow: colors.effects.glow
+              }}
             />
             {/* Blinking cursor effect */}
-            <div className="w-3 h-5 ml-1 bg-[#00ff00] animate-pulse shadow-[0_0_5px_rgba(0,255,0,0.5)]" />
+            <div 
+              className="w-3 h-5 ml-1 animate-pulse" 
+              style={{ 
+                backgroundColor: colors.primary.bright,
+                boxShadow: colors.effects.glow
+              }}
+            />
           </div>
         </form>
 
@@ -184,26 +195,56 @@ export default function GhostQuery() {
               if (!processing) await handleSubmit(e as React.FormEvent);
             }}
             disabled={processing}
-            className={`px-6 py-2 uppercase tracking-wider border border-[#00ff00] shadow-[0_0_10px_rgba(0,255,0,0.3)] transition ${
+            className={`px-6 py-2 uppercase tracking-wider border transition-all duration-200 ${
               processing
                 ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-[#00ff00] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,0,0.7)]"
+                : "hover:text-black"
             }`}
+            style={{
+              borderColor: colors.primary.bright,
+              color: colors.primary.bright,
+              boxShadow: colors.effects.shadow,
+              ...(processing ? {} : {
+                ':hover': {
+                  backgroundColor: colors.primary.bright,
+                  boxShadow: colors.effects.glowBright
+                }
+              })
+            }}
+            onMouseEnter={(e) => {
+              if (!processing) {
+                e.currentTarget.style.backgroundColor = colors.primary.bright;
+                e.currentTarget.style.boxShadow = colors.effects.glowBright;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!processing) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.boxShadow = colors.effects.shadow;
+              }
+            }}
           >
             {processing ? "PROCESSING..." : "EXECUTE"}
           </button>
         </div>
 
         {/* Status messages below the search bar */}
-        <div className="border border-[#00ff00]/30 p-4 bg-[#00ff00]/5 shadow-[0_0_15px_rgba(0,255,0,0.3)]">
+        <div 
+          className="border p-4" 
+          style={{
+            borderColor: colors.border.standard,
+            backgroundColor: colors.background.card,
+            boxShadow: colors.effects.shadow
+          }}
+        >
           {status.map((line, i) => (
             <div
               key={i}
-              className={`mb-1 ${
-                processing
-                  ? "text-[#00ff00] drop-shadow-[0_0_5px_rgba(0,255,0,0.5)]"
-                  : "text-[#008000]"
-              }`}
+              className="mb-1"
+              style={{
+                color: processing ? colors.primary.bright : colors.text.secondary,
+                textShadow: processing ? colors.effects.glow : 'none'
+              }}
             >
               {line}
             </div>

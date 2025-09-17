@@ -120,3 +120,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom styles for improved hacker theme readability */
+.ghost-input::placeholder {
+  color: #66cc66 !important;
+  opacity: 0.8;
+}
+
+.ghost-input:focus::placeholder {
+  color: #4d994d !important;
+  opacity: 0.6;
+}
+
+/* Smooth transitions for all interactive elements */
+.ghost-transition {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom scrollbar for better theme integration */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.5);
+}
