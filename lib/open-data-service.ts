@@ -171,14 +171,14 @@ class OpenDataService {
       const data = await response.json();
       
       if (data.result?.results) {
-        return data.result.results.map((dataset: any, index: number) => ({
-          title: dataset.title || 'Untitled Dataset',
-          snippet: this.truncateText(dataset.description || 'No description available', 200),
-          url: dataset.landingPage,
+        return data.result.results.map((dataset: Record<string, unknown>, index: number) => ({
+          title: (dataset.title as string) || 'Untitled Dataset',
+          snippet: this.truncateText((dataset.description as string) || 'No description available', 200),
+          url: dataset.landingPage as string,
           relevance_score: Math.max(0.8 - (index * 0.05), 0.25),
           source: 'EU Open Data Portal',
-          organization: dataset.publisher?.name,
-          last_updated: dataset.modified
+          organization: (dataset.publisher as Record<string, unknown>)?.name as string,
+          last_updated: dataset.modified as string
         }));
       }
 

@@ -19,7 +19,7 @@ interface SearchResultsProps {
   processingTime: number;
   isLoading?: boolean;
   error?: string;
-  searchMode?: 'data' | 'ai';
+  searchMode?: 'data' | 'ai' | 'duckduckgo';
 }
 
 export default function SearchResults({
@@ -92,9 +92,10 @@ export default function SearchResults({
   }
 
   const isAIMode = searchMode === 'ai';
-  const modeColor = isAIMode ? '#ff0055' : colors.primary.bright;
-  const modeIcon = isAIMode ? '🤖' : '🗄️';
-  const modeLabel = isAIMode ? 'AI SEARCH' : 'OPEN DATA SEARCH';
+  const isDuckDuckGoMode = searchMode === 'duckduckgo';
+  const modeColor = isAIMode ? '#ff0055' : (isDuckDuckGoMode ? '#ff6600' : colors.primary.bright);
+  const modeIcon = isAIMode ? '🤖' : (isDuckDuckGoMode ? '🦆' : '🗄️');
+  const modeLabel = isAIMode ? 'AI SEARCH' : (isDuckDuckGoMode ? 'DUCKDUCKGO SEARCH' : 'OPEN DATA SEARCH');
 
   return (
     <div className="mt-8 space-y-6">
@@ -130,8 +131,9 @@ export default function SearchResults({
         
         {results.map((result, index) => {
           const isAIResult = result.source?.toLowerCase().includes('grok') || result.source?.toLowerCase().includes('ai');
-          const resultBorderColor = isAIResult && isAIMode ? '#ff0055' : colors.border.subtle;
-          const resultHoverBorder = isAIResult && isAIMode ? '#ff0055' : colors.border.bright;
+          const isDuckDuckGoResult = result.source?.toLowerCase().includes('duckduckgo');
+          const resultBorderColor = isAIResult && isAIMode ? '#ff0055' : (isDuckDuckGoResult && isDuckDuckGoMode ? '#ff6600' : colors.border.subtle);
+          const resultHoverBorder = isAIResult && isAIMode ? '#ff0055' : (isDuckDuckGoResult && isDuckDuckGoMode ? '#ff6600' : colors.border.bright);
           
           return (
           <div
@@ -140,13 +142,15 @@ export default function SearchResults({
             style={{
               borderColor: resultBorderColor,
               backgroundColor: colors.background.card,
-              boxShadow: isAIResult && isAIMode ? '0 0 10px rgba(255, 0, 85, 0.1)' : 'none'
+              boxShadow: isAIResult && isAIMode ? '0 0 10px rgba(255, 0, 85, 0.1)' : (isDuckDuckGoResult && isDuckDuckGoMode ? '0 0 10px rgba(255, 102, 0, 0.1)' : 'none')
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = resultHoverBorder;
               e.currentTarget.style.backgroundColor = colors.background.hover;
               if (isAIResult && isAIMode) {
                 e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 0, 85, 0.2)';
+              } else if (isDuckDuckGoResult && isDuckDuckGoMode) {
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 102, 0, 0.2)';
               }
             }}
             onMouseLeave={(e) => {
@@ -154,6 +158,8 @@ export default function SearchResults({
               e.currentTarget.style.backgroundColor = colors.background.card;
               if (isAIResult && isAIMode) {
                 e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 0, 85, 0.1)';
+              } else if (isDuckDuckGoResult && isDuckDuckGoMode) {
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 102, 0, 0.1)';
               } else {
                 e.currentTarget.style.boxShadow = 'none';
               }

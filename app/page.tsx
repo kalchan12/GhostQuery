@@ -38,8 +38,8 @@ export default function GhostQuery() {
   // Search results state
   const [searchResults, setSearchResults] = useState<SearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string>("");
-  // Search mode: 'data' for open data search, 'ai' for AI search
-  const [searchMode, setSearchMode] = useState<'data' | 'ai'>('data');
+  // Search mode: 'data' for open data search, 'ai' for AI search, 'duckduckgo' for DuckDuckGo search
+  const [searchMode, setSearchMode] = useState<'data' | 'ai' | 'duckduckgo'>('data');
 
   // Animates the title by revealing one letter at a time
   useEffect(() => {
@@ -64,8 +64,9 @@ export default function GhostQuery() {
     setSearchResults(null);
     
     const isAIMode = searchMode === 'ai';
-    const apiEndpoint = isAIMode ? '/api/ai-search' : '/api/search';
-    const serviceName = isAIMode ? 'GROK AI SERVICE' : 'OPEN DATA SERVICE';
+    const isDuckDuckGoMode = searchMode === 'duckduckgo';
+    const apiEndpoint = isAIMode ? '/api/ai-search' : (isDuckDuckGoMode ? '/api/duckduckgo-search' : '/api/search');
+    const serviceName = isAIMode ? 'GROK AI SERVICE' : (isDuckDuckGoMode ? 'DUCKDUCKGO SEARCH SERVICE' : 'OPEN DATA SERVICE');
     
     setStatus([
       "INITIALIZING SEARCH PROTOCOL...",
@@ -77,7 +78,7 @@ export default function GhostQuery() {
       setStatus([
         "SEARCH IN PROGRESS...",
         `ANALYZING: ${q.toUpperCase()}`,
-        isAIMode ? "PROCESSING WITH AI MODEL..." : "SEARCHING DATA REPOSITORIES...",
+        isAIMode ? "PROCESSING WITH AI MODEL..." : (isDuckDuckGoMode ? "QUERYING DUCKDUCKGO API..." : "SEARCHING DATA REPOSITORIES..."),
       ]);
 
       const response = await fetch(apiEndpoint, {
@@ -94,7 +95,7 @@ export default function GhostQuery() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || `${isAIMode ? 'AI' : 'Data'} search failed`);
+        throw new Error(data.message || `${isAIMode ? 'AI' : (isDuckDuckGoMode ? 'DuckDuckGo' : 'Data')} search failed`);
       }
 
       if (data.success && data.data) {
@@ -167,7 +168,7 @@ export default function GhostQuery() {
         {/* Search Mode Selection */}
         <div className="text-center mb-8">
           <div className="text-sm mb-4" style={{ color: colors.text.secondary }}>SELECT SEARCH MODE</div>
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-3 flex-wrap">
             <button
               onClick={() => setSearchMode('data')}
               disabled={processing}
@@ -230,11 +231,44 @@ export default function GhostQuery() {
             >
               🤖 AI Search
             </button>
+            <button
+              onClick={() => setSearchMode('duckduckgo')}
+              disabled={processing}
+              className={`px-4 py-2 uppercase tracking-wider border transition-all duration-200 ${
+                searchMode === 'duckduckgo'
+                  ? "text-black"
+                  : "hover:text-black"
+              } ${processing ? "opacity-50 cursor-not-allowed" : ""}`}
+              style={{
+                borderColor: '#ff6600',
+                color: searchMode === 'duckduckgo' ? '#000' : '#ff6600',
+                backgroundColor: searchMode === 'duckduckgo' ? '#ff6600' : 'transparent',
+                boxShadow: searchMode === 'duckduckgo' ? '0 0 20px rgba(255, 102, 0, 0.5)' : '0 0 10px rgba(255, 102, 0, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                if (!processing && searchMode !== 'duckduckgo') {
+                  e.currentTarget.style.backgroundColor = '#ff6600';
+                  e.currentTarget.style.color = '#000';
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 102, 0, 0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!processing && searchMode !== 'duckduckgo') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#ff6600';
+                  e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 102, 0, 0.2)';
+                }
+              }}
+            >
+              🦆 DuckDuckGo
+            </button>
           </div>
           <div className="text-xs mt-2" style={{ color: colors.text.muted }}>
             {searchMode === 'data' 
               ? 'Search government and public datasets from Data.gov and EU Open Data Portal'
-              : 'Get AI-powered insights and comprehensive analysis using Hugging Face AI'}
+              : searchMode === 'ai' 
+                ? 'Get AI-powered insights and comprehensive analysis using Hugging Face AI'
+                : 'Privacy-focused web search with instant answers from DuckDuckGo'}
           </div>
         </div>
 
